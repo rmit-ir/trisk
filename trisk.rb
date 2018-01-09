@@ -2,20 +2,22 @@
 
 require 'csv'
 
+# Parameters
 runfile=ARGV[0]
 baseline=ARGV[1]
 metric=ARGV[2] # e.g "ndcg@10"
-mode=(ARGV[3].to_i) # 1 = inferrential mode, 2 = exploratory mode
+mode=(ARGV[3].to_i) # 1 = inferential mode, 2 = exploratory mode
 mode = (mode == 0) ? 1 : mode
 
+# Globals
 $alpha=0.0
-
 $run_map = Hash.new
 $baseline_map = Hash.new
 $risk_reward = []
 $urisk = 0.0
 $c = 0
 
+# Calculations from Dincer TRisk paper.
 def risk_reward_tradeoff_score(topic)
     r = $run_map[topic]
     b = $baseline_map[topic]
@@ -36,24 +38,7 @@ def parametric_standard_error_estimation
     return (1 / Math.sqrt($c)) * sx 
 end
 
-# Load in the CSV files into their respective maps.
-
-CSV.foreach(runfile, :headers => true) do |row|
-    next if row['topic'] == 'amean'
-    $run_map[row['topic']] = row[metric].to_f
-end
-
-$c = $run_map.keys.size
-
-CSV.foreach(baseline, :headers => true) do |row|
-    next if row['topic'] == 'amean'
-    $baseline_map[row['topic']] = row[metric].to_f
-end
-$bc = $baseline_map.keys.size
-puts "Warning: c and bc do not match" if $c != $bc
-
-if mode == 1
-    # Build the set of risk reward scores
+def output_inferential_mode
     puts "alpha,urisk,trisk,pvalue"
     [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0].each do |alpha|
         $risk_reward = []
@@ -67,6 +52,7 @@ if mode == 1
         # Calculate the mean of the risk reward scores. This is the URisk score.
         $urisk = $risk_reward.inject{ |sum, el| sum + el }.to_f / $risk_reward.size
 
+        # Calculate TRisk score
         $se = parametric_standard_error_estimation
         $trisk = $urisk / $se
 
@@ -77,7 +63,9 @@ if mode == 1
         $pvalue = `Rscript --vanilla calc_pvalue.R #{$trisk.round(4)} #{df}`.split(' ')[1].to_f
         puts "#{alpha.round(1)},#{$urisk.round(4)},#{$trisk.round(4)},#{$pvalue.round(4)}" 
     end
-else
+end
+
+def output_exploratory_mode
     puts "alpha,topic,trisk,pvalue"
     [0.0, 1.0, 5.0].each do |alpha|
         $risk_reward = []
@@ -99,4 +87,23 @@ else
             puts "#{alpha.round(1)},#{topic},#{tri.round(3)},#{pvalue.round(4)}" 
         end
     end
+end
+
+# Load in the CSV files into their respective maps.
+CSV.foreach(runfile, :headers => true) { |row| $run_map[row['topic']] = row[metric].to_f }
+$c = $run_map.keys.size
+
+CSV.foreach(baseline, :headers => true) { |row| $baseline_map[row['topic']] = row[metric].to_f }
+$bc = $baseline_map.keys.size
+
+# Sanity check the runs.
+STDERR.puts "Warning: The number of topics in each respective run do not match!" if $c != $bc
+STDERR.puts "Warning: The topics are not the same in the run supplied and the baseline run." if ($run_map.keys.sort != $baseline_map.keys.sort)
+
+if mode == 1
+    # Inferential mode. Takes all topics and inferentially calculates TRisk with respect to all.
+    output_inferential_mode
+else
+    # Exploratory mode. Allows finding the TRisk score per-topic.
+    output_exploratory_mode
 end
