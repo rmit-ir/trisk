@@ -6,9 +6,17 @@
 # and the column header of the target metric
 # e.g. ./trisk_gdeval.sh run.gdeval baseline.gdeval ndcg@10
 
+# If you would like to get the per-topic TRisk scores,
+# pass in the optional flag --per-topic.
+
 RUN="$1"
 BL="$2"
 METRIC="$3"
+MODE=1
+
+if [ "$4" == "--per-topic" ]; then
+    MODE=2
+fi
 
 run_clean=$(mktemp)
 cp $RUN $run_clean
@@ -18,4 +26,4 @@ baseline_clean=$(mktemp)
 cp $BL $baseline_clean
 sed -i '/amean/d' $baseline_clean
 
-./trisk.rb $run_clean $baseline_clean $METRIC 1
+./trisk.rb $run_clean $baseline_clean $METRIC $MODE 
