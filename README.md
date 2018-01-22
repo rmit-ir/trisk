@@ -6,6 +6,9 @@ The TRisk measure was first introduced in the 2014 SIGIR paper *Hypothesis Testi
 
 The tool supports outputting TRisk values in both *inferential* mode (across all topics), and *exploratory* mode (per-topic).
 
+## Changelog
+22/01/2018 - Fixed issue where the absolute value of negative t-values was not taken, resulting in probabilities outside of [0,1]. Fixed issue where script would not work without executing inside the folder.
+
 ## Usage
 
 ### trec_eval

@@ -60,8 +60,9 @@ def output_inferential_mode
         # t-values into p-values. The degrees of freedom is given by the 
         # number of topics - 1.
         df = $run_map.keys.count - 1
-        $pvalue = `Rscript --vanilla calc_pvalue.R #{$trisk.round(4)} #{df}`.split(' ')[1].to_f
-        puts "#{alpha.round(1)},#{$urisk.round(4)},#{$trisk.round(4)},#{$pvalue.round(4)}" 
+        abs_t = $trisk.round(4).abs
+        $pvalue = `Rscript --vanilla #{File.dirname(__FILE__)}/calc_pvalue.R #{abs_t} #{df}`.split(' ')[1].to_f
+        puts "#{alpha.round(1)},#{$urisk.round(4)},#{$trisk.round(4)},#{$pvalue}" 
     end
 end
 
@@ -83,8 +84,9 @@ def output_exploratory_mode
         df = $run_map.keys.count - 1
         $run_map.each do |topic, aggregate|
             tri = risk_reward_tradeoff_score(topic) / sx_val
-            pvalue = `Rscript --vanilla calc_pvalue.R #{tri.round(4)} #{df}`.split(' ')[1].to_f
-            puts "#{alpha.round(1)},#{topic},#{tri.round(3)},#{pvalue.round(4)}" 
+            abs_t = tri.round(4).abs
+            pvalue = `Rscript --vanilla #{File.dirname(__FILE__)}/calc_pvalue.R #{abs_t} #{df}`.split(' ')[1].to_f
+            puts "#{alpha.round(1)},#{topic},#{tri.round(4)},#{pvalue.round(4)}" 
         end
     end
 end

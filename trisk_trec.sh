@@ -30,4 +30,5 @@ echo "topic,score" >> $baseline_clean
 cat $BL | awk '{print $2","$3}' >> $baseline_clean
 sed -i '/all/d' $baseline_clean
 
-./trisk.rb $run_clean $baseline_clean score $MODE
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ruby $DIR/trisk.rb $run_clean $baseline_clean score $MODE

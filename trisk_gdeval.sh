@@ -26,4 +26,5 @@ baseline_clean=$(mktemp)
 cp $BL $baseline_clean
 sed -i '/amean/d' $baseline_clean
 
-./trisk.rb $run_clean $baseline_clean $METRIC $MODE 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ruby $DIR/trisk.rb $run_clean $baseline_clean $METRIC $MODE 
